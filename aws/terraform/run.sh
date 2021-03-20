@@ -4,6 +4,8 @@ set -o xtrace
 set -o errexit
 set -o nounset
 
+# TODO: take in folder as input
+# TODO: rsync folder, rather than scp
 INPUT_FILE="${HOME}/git/home/notes/3dprinting/photogrammetry/input_files/Zephyr_Dante_Statue_Dataset/input.tar.gz"
 
 terraform plan
