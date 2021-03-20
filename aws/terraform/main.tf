@@ -36,7 +36,10 @@ resource "aws_security_group" "allow_ssh" {
 
 resource "aws_spot_instance_request" "photogrammetry" {
   ami                             = "ami-00991ab7b04e5a26f" # us-east-1
-  instance_type                   = "t2.micro"
+  # See https://aws.amazon.com/ec2/spot/pricing/ for G instances
+  #instance_type                   = "t2.micro"              # for testing (not g instance)
+  instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
+  #instance_type                   = "g3s.4xlarge"            # fast g instance
   spot_type                       = "one-time"
   associate_public_ip_address     = true
   wait_for_fulfillment            = true
