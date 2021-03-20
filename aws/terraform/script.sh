@@ -9,7 +9,7 @@ mkdir -p /data/project/${PROJECT_NAME}/output
 
 # Install meshroom
 cd /data || exit 1
-curl -L https://github.com/alicevision/meshroom/releases/download/v2021.1.0/${MESHROOM_NAME}.tar.gz | tar -zxvf -
+curl -L https://github.com/alicevision/meshroom/releases/download/v2019.1.0/Meshroom-2019.1.0-linux.tar.gz | tar -zxvf -
 ln -s Mesh* meshroom
 
 # Install script
@@ -24,8 +24,8 @@ if [ ! -f "project.mg" ]; then
 fi
 /data/meshroom/meshroom_compute /data/project/${PROJECT_NAME}/project.mg --toNode Publish_1 --forceStatus
 EOF
+chmod +x script.sh
 
 mv "${INPUT_FILE}" "/data/project/${PROJECT_NAME}/input"
 cd "/data/project/${PROJECT_NAME}/input" || exit 1
 tar -zxvf input.tar.gz && rm input.tar.gz
-

@@ -14,9 +14,13 @@ IP="$(terraform show -no-color | grep public_ip | awk '{print $3}' | tail -1 | s
 set +o errexit
 while true
 do
-    scp script.sh "ec2-user@${IP}:" && break
+    scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null script.sh "ec2-user@${IP}:" && break
+    sleep 10
 done
 set -o errexit
-scp "${INPUT_FILE}" "ec2-user@${IP}:"
+scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INPUT_FILE}" "ec2-user@${IP}:"
 
-ssh "ec2-user@${IP}" echo 'now run: "sudo su; ./script.sh"'
+echo "# NOW RUN"
+echo ssh "ec2-user@${IP}"
+echo "sudo su"
+echo "./script.sh"'
