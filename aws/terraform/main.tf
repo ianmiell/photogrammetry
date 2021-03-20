@@ -34,8 +34,19 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
-resource "aws_instance" "photogrammetry" {
-  ami           = "ami-00991ab7b04e5a26f" # us-east-1
-  instance_type = "t2.micro"
-  security_groups = [aws_security_group.allow_ssh.name]
+resource "aws_spot_instance_request" "photogrammetry" {
+  ami                             = "ami-00991ab7b04e5a26f" # us-east-1
+  instance_type                   = "t2.micro"
+  spot_type                       = "one-time"
+  associate_public_ip_address     = true
+  wait_for_fulfillment            = true
+  vpc_security_group_ids          = [aws_security_group.allow_ssh.name]
+  key_name                        = aws_key_pair.sshkey.key_name
+  instance_interruption_behaviour = "terminate"
 }
+
+resource "aws_key_pair" "sshkey" {
+  key_name   = "sshkey"
+  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDL3OmPrKxJN436tuw6h2hmE2B2toi7PMb3GbgYntgBXx0Kif3z6a+Je1kKZEQ1gAlH2UOjvbz+cnuZLRcqa+S+r8Tz86fNLlHsJ86SiBXw1gDm0WmF0rkxGwyRqc96o2P3tl2rVrAwnMVt9Xe5Z5hGFruH9lU7bz2smvyw6g0OSlWd1TMrXTGACHaf4u6CWuRWgHkTFi31NsZX2EQQbK4YK6HVVsQUrV6ygyk6qe0zKyp8fqiYyYCI7QEbkhgLq27xG4tSRTySjRbm1DBLNFRHRrPoKSHgZ7jOca0TjO07Mgf0Knv7zvDeRdmhB3iSuO6ZfYAx1hdlAt9W06Pr3BKR imiell@Ians-MacBook-Pro.local"
+}
+
