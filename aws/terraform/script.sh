@@ -35,14 +35,40 @@ mkdir -p /data/project/${PROJECT_NAME}/output
 # Install meshroom
 cd /data || exit 1
 curl -L https://github.com/alicevision/meshroom/releases/download/v2019.2.0/Meshroom-2019.2.0-linux.tar.gz | tar -zxvf -
-git clone https://github.com/alicevision/AliceVision.git --recursive
-mkdir build && cd build
-cmake -DALICEVISION_BUILD_DEPENDENCIES=ON -DCMAKE_INSTALL_PREFIX=$PWD/../install ../AliceVision
-make -j10
+ln -s Mesh* meshroom
+
+cat > /usr/bin/meshroom.sh << 'EOF'
+# this should point to the installation folder of AliceVision, for the pre-built binaries
+# it would be the full path to the folder aliceVision
+export ALICEVISION_INSTALL=/data/meshroom/aliceVision
+
+# if you are using the plugins, here list all the paths to find them
+#f or the pre-built binaries it is the full path to the folder qtPlugins/qml/
+#export QML2_IMPORT_PATH=/path/to/qmlAlembic/build/install/qml:/path/to/QtAliceVision/build/install/qml:/path/to/QtOIIO/build/install/qml/:$QML2_IMPORT_PATH
+export QML2_IMPORT_PATH=/data/meshroom/qtPlugins/qml
+
+# location of the sensor database
+export ALICEVISION_SENSOR_DB=${ALICEVISION_INSTALL}/share/aliceVision/cameraSensors.db
+
+# adjust according to your driver and cuda version
+export LD_LIBRARY_PATH=${ALICEVISION_INSTALL}/lib:/usr/lib/nvidia-384:/usr/local/cuda-8.0/lib64/:$LD_LIBRARY_PATH
+
+# the meshroom path (the current directory)
+export MESHROOMPATH=$PWD
+
+# this line launch whatever script and relevant options that are given as input ($@)
+PYTHONPATH=${MESHROOMPATH} PATH=$PATH:${ALICEVISION_INSTALL}/bin python ${MESHROOMPATH}/$@
+EOF
+chmod +x /usr/bin/meshroom.sh
+
+
+#git clone https://github.com/alicevision/AliceVision.git --recursive
+#mkdir build && cd build
+#cmake -DALICEVISION_BUILD_DEPENDENCIES=ON -DCMAKE_INSTALL_PREFIX=$PWD/../install ../AliceVision
+#make -j10
 
 
 # OLD
-#ln -s Mesh* meshroom
 #
 ## Install script
 #cd /data/project || exit 1
@@ -73,6 +99,6 @@ make -j10
 ## PYTHONPATH=${MESHROOMPATH} PATH=$PATH:${ALICEVISION_INSTALL}/bin python ${MESHROOMPATH}/meshroom/ui $@
 #
 #
-#mv "${INPUT_FILE}" "/data/project/${PROJECT_NAME}/input"
-#cd "/data/project/${PROJECT_NAME}/input" || exit 1
-#tar -zxvf input.tar.gz && rm input.tar.gz
+mv "${INPUT_FILE}" "/data/project/${PROJECT_NAME}/input"
+cd "/data/project/${PROJECT_NAME}/input" || exit 1
+tar -zxvf input.tar.gz && rm input.tar.gz

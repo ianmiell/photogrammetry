@@ -25,4 +25,4 @@ scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INPUT_FILE}" 
 echo "# NOW RUN"
 echo ssh "ec2-user@${IP}"
 echo "sudo su"
-echo "./script.sh"'
+echo "./script.sh"
