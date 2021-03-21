@@ -4,13 +4,13 @@ output "public_ip" {
 }
 
 output "id" {
-  description = "IDs of instances"
+  description = "ID of instance"
   value       = aws_spot_instance_request.photogrammetry.id
 }
 
-output "instance_id" {
-  description = "IDs of instances"
-  value       = aws_spot_instance_request.photogrammetry.instance_id
+output "spot_instance_id" {
+  description = "Spot ID of instance"
+  value       = aws_spot_instance_request.photogrammetry.spot_instance_id
 }
 
 output "arn" {
