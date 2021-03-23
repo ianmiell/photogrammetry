@@ -16,3 +16,4 @@
 
 [GUI on cloud host](https://aws.amazon.com/premiumsupport/knowledge-center/ec2-linux-2-install-gui/)
 
+[Example dataset](https://github.com/alicevision/dataset_monstree)

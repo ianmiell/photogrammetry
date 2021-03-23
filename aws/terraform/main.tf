@@ -55,13 +55,13 @@ resource "aws_security_group" "allow_rdp" {
 
 # WINDOWS PHOTOGRAMMETRY INSTANCE
 # To get Administrator password (.pem in ~/.ssh, see below for how it was generated):
-#  aws --profile meirionconsulting ec2 get-password-data --instance-id INSTANCE_ID --priv-launch-key MyKeyPair.pem
+#  aws --profile meirionconsulting ec2 get-password-data --priv-launch-key ~/.ssh/MyKeyPair.pem --instance-id INSTANCE_ID
 resource "aws_spot_instance_request" "photogrammetry" {
   #ami                             = "ami-00991ab7b04e5a26f" # meshroom graphics, us-east-1
   ami                             = "ami-07817f5d0e3866d32" # windows server 2019
   # See https://aws.amazon.com/ec2/spot/pricing/ for G instances
-  instance_type                   = "t2.micro"              # for testing (not g instance)
-  #instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
+  #instance_type                   = "t2.micro"              # for testing (not g instance)
+  instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
   #instance_type                   = "g3s.4xlarge"            # fast g instance
   spot_type                       = "one-time"
   associate_public_ip_address     = true
@@ -86,6 +86,10 @@ Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-
 Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
 
+# Install SSH client and server
+Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+
 # Download meshroom
 add-type @"
     using System.Net;
@@ -102,22 +106,16 @@ add-type @"
 $Url = 'https://81.149.204.19/files/Meshroom-2021.1.0-win64.zip'
 $ZipFile = 'C:\Users\meshroom' + $(Split-Path -Path $Url -Leaf)
 $Destination= 'C:\Users\meshroom'
-
 Invoke-WebRequest -Uri $Url -OutFile $ZipFile
-
 # change ownership of meshroom
 $ACL = Get-Acl $ZipFile
 $User = New-Object  System.Security.Principal.NTAccount("meshroom")
 Set-Acl -Path $ZipFile -AclObject $ACL
-
 # Extract file
 $ExtractShell = New-Object -ComObject Shell.Application
 $Files = $ExtractShell.Namespace($ZipFile).Items()
 $ExtractShell.NameSpace($Destination).CopyHere($Files)
 
-# Install SSH client and server
-Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
-Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
 
 # Install Cygwin
 param ( $TempCygDir="$env:temp\cygInstall" )
