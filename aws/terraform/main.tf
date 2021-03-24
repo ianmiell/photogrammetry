@@ -58,7 +58,8 @@ resource "aws_security_group" "allow_rdp" {
 #  aws --profile meirionconsulting ec2 get-password-data --priv-launch-key ~/.ssh/MyKeyPair.pem --instance-id INSTANCE_ID
 resource "aws_spot_instance_request" "photogrammetry" {
   # See https://aws.amazon.com/ec2/spot/pricing/ for G instances
-  ami                             = "ami-0023ffc015ca50978" # Microsoft Windows Server 2016 Locale English with Nvidia GPU Grid Driver AMI provided by Amazon
+  #ami                             = "ami-0023ffc015ca50978" # Microsoft Windows Server 2016 Locale English with Nvidia GPU Grid Driver AMI provided by Amazon
+  ami                             = "ami-07817f5d0e3866d32" # Microsoft Windows Server 2019
   #instance_type                   = "t2.micro"              # for testing (not g instance)
   #instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
   instance_type                   = "g3.4xlarge"            # fast g instance
@@ -89,6 +90,19 @@ Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\W
 Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
 Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
 Restart-Service sshd
+
+# Install NVIDIA drivers - https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#preinstalled-nvidia-driver
+$Bucket = "ec2-windows-nvidia-drivers"
+$KeyPrefix = "latest"
+$LocalPath = "$home\Desktop\NVIDIA"
+$Objects = Get-S3Object -BucketName $Bucket -KeyPrefix $KeyPrefix -Region us-east-1
+foreach ($Object in $Objects) {
+    $LocalFileName = $Object.Key
+    if ($LocalFileName -ne '' -and $Object.Size -ne 0) {
+        $LocalFilePath = Join-Path $LocalPath $LocalFileName
+        Copy-S3Object -BucketName $Bucket -Key $Object.Key -LocalFile $LocalFilePath -Region us-east-1
+    }
+}
 
 # Download meshroom
 add-type @"
