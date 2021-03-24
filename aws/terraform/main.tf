@@ -60,8 +60,8 @@ resource "aws_spot_instance_request" "photogrammetry" {
   # See https://aws.amazon.com/ec2/spot/pricing/ for G instances
   ami                             = "ami-0023ffc015ca50978" # Microsoft Windows Server 2016 Locale English with Nvidia GPU Grid Driver AMI provided by Amazon
   #instance_type                   = "t2.micro"              # for testing (not g instance)
-  instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
-  #instance_type                   = "g3s.4xlarge"            # fast g instance
+  #instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
+  instance_type                   = "g3s.4xlarge"            # fast g instance
   spot_type                       = "one-time"
   associate_public_ip_address     = true
   wait_for_fulfillment            = true
