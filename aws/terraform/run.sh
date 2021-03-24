@@ -16,8 +16,9 @@ IP="$(terraform show -no-color | grep public_ip | awk '{print $3}' | tail -1 | s
 set +o errexit
 while true
 do
-    scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INPUT_FILE}" "meshroom@${IP}:"
+    if sshpass -p '!QA2ws3ed' | scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INPUT_FILE}" "meshroom@${IP}:"
+    then
+        break
+    fi
     sleep 10
 done
-set -o errexit
-

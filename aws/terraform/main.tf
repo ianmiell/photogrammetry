@@ -57,9 +57,8 @@ resource "aws_security_group" "allow_rdp" {
 # To get Administrator password (.pem in ~/.ssh, see below for how it was generated):
 #  aws --profile meirionconsulting ec2 get-password-data --priv-launch-key ~/.ssh/MyKeyPair.pem --instance-id INSTANCE_ID
 resource "aws_spot_instance_request" "photogrammetry" {
-  #ami                             = "ami-00991ab7b04e5a26f" # meshroom graphics, us-east-1
-  ami                             = "ami-07817f5d0e3866d32" # windows server 2019
   # See https://aws.amazon.com/ec2/spot/pricing/ for G instances
+  ami                             = "ami-0023ffc015ca50978" # Microsoft Windows Server 2016 Locale English with Nvidia GPU Grid Driver AMI provided by Amazon
   #instance_type                   = "t2.micro"              # for testing (not g instance)
   instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
   #instance_type                   = "g3s.4xlarge"            # fast g instance
@@ -89,6 +88,7 @@ Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\W
 # Install SSH client and server
 Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
 Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+Restart-Service sshd
 
 # Download meshroom
 add-type @"
@@ -116,17 +116,17 @@ $ExtractShell = New-Object -ComObject Shell.Application
 $Files = $ExtractShell.Namespace($ZipFile).Items()
 $ExtractShell.NameSpace($Destination).CopyHere($Files)
 
-
-# Install Cygwin
-param ( $TempCygDir="$env:temp\cygInstall" )
-if(!(Test-Path -Path $TempCygDir -PathType Container))
- {
-    $null = New-Item -Type Directory -Path $TempCygDir -Force
- }
-$client = new-object System.Net.WebClient
-$client.DownloadFile("http://cygwin.com/setup.exe", "$TempCygDir\setup.exe" )
-Start-Process -wait -FilePath "$TempCygDir\setup.exe" -ArgumentList "-q -n -l $TempCygDir -s http://mirror.nyi.net/cygwin/ -R c:\Cygwin"
-Start-Process -wait -FilePath "$TempCygDir\setup.exe" -ArgumentList "-q -n -l $TempCygDir -s http://mirror.nyi.net/cygwin/ -R c:\Cygwin -P openssh"
+###### Start-Process isn't
+## Install Cygwin
+#param ( $TempCygDir="$env:temp\cygInstall" )
+#if(!(Test-Path -Path $TempCygDir -PathType Container))
+# {
+#    $null = New-Item -Type Directory -Path $TempCygDir -Force
+# }
+#$client = new-object System.Net.WebClient
+#$client.DownloadFile("http://cygwin.com/setup.exe", "$TempCygDir\setup.exe" )
+#Start-Process -wait -FilePath "$TempCygDir\setup.exe" -ArgumentList "-q -n -l $TempCygDir -s http://mirror.nyi.net/cygwin/ -R c:\Cygwin"
+#Start-Process -wait -FilePath "$TempCygDir\setup.exe" -ArgumentList "-q -n -l $TempCygDir -s http://mirror.nyi.net/cygwin/ -R c:\Cygwin -P openssh"
 </powershell>
 EOF
 }
