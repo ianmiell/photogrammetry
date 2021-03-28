@@ -53,6 +53,19 @@ resource "aws_security_group" "allow_rdp" {
 }
 
 
+resource "aws_volume_attachment" "photogrammetry_volume_attachment" {
+  device_name  = "xvdj"
+  volume_id    = aws_ebs_volume.photogrammetry_volume.id
+  instance_id  = aws_spot_instance_request.photogrammetry.id
+  skip_destroy = true
+}
+
+resource "aws_ebs_volume" "photogrammetry_volume" {
+  availability_zone = aws_spot_instance_request.photogrammetry.availability_zone
+  size              = 8
+}
+
+
 # WINDOWS PHOTOGRAMMETRY INSTANCE
 # To get Administrator password (.pem in ~/.ssh, see below for how it was generated):
 #  aws --profile meirionconsulting ec2 get-password-data --priv-launch-key ~/.ssh/MyKeyPair.pem --instance-id INSTANCE_ID
@@ -61,8 +74,8 @@ resource "aws_spot_instance_request" "photogrammetry" {
   #ami                             = "ami-0023ffc015ca50978" # Microsoft Windows Server 2016 Locale English with Nvidia GPU Grid Driver AMI provided by Amazon
   ami                             = "ami-07817f5d0e3866d32" # Microsoft Windows Server 2019
   #instance_type                   = "t2.micro"              # for testing (not g instance)
-  #instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
-  instance_type                   = "g3.4xlarge"            # fast g instance
+  instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
+  #instance_type                   = "g3.4xlarge"            # fast g instance
   spot_type                       = "one-time"
   associate_public_ip_address     = true
   wait_for_fulfillment            = true
@@ -76,6 +89,24 @@ resource "aws_spot_instance_request" "photogrammetry" {
   # cat C:\ProgramData\Amazon\EC2-Windows\Launch\Log\Ec2Launch.log
   user_data     = <<EOF
 <powershell>
+# From: https://github.com/dhoer/terraform_examples/blob/master/aws-ebs-mount/instance/main.tf
+# EC2Config service does not take actions on disks that have already been
+# initialized. It only provisions newer 'raw' disks, formats them and assigns
+# them with driver letters. So Powershell's Get-Disk function is used to
+# bring ebs volume online with read-write access after it has already been
+# initialized. It should assign it with the letter D: by default.
+#
+# See the following for more info about managing storage with windows:
+# https://blogs.msdn.microsoft.com/san/2012/07/03/managing-storage-with-windows-powershell-on-windows-server-2012/
+
+# Bring ebs volume online with read-write access
+Get-Disk | Where-Object IsOffline -Eq $True | Set-Disk -IsOffline $False
+Get-Disk | Where-Object isReadOnly -Eq $True | Set-Disk -IsReadOnly $False
+
+# Set Administrator password
+$admin = [adsi]("WinNT://./administrator, user")
+$admin.psbase.invoke("SetPassword", "!QA2ws3ed")
+
 # https://github.com/jirizarry426/Terraform-Playground/blob/c2cf040183fbb288e35c82aef8a4967548da9ca4/Windows/JI-TF-PG.tf
 Set-ExecutionPolicy -executionpolicy unrestricted
 New-LocalUser "meshroom" -Password (ConvertTo-SecureString "!QA2ws3ed" -AsPlainText -Force) -FullName "meshroom" -Description "run meshroom"
@@ -87,22 +118,10 @@ Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
 
 # Install SSH client and server
+# TODO: restart on startup
 Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
 Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
 Restart-Service sshd
-
-# Install NVIDIA drivers - https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#preinstalled-nvidia-driver
-$Bucket = "ec2-windows-nvidia-drivers"
-$KeyPrefix = "latest"
-$LocalPath = "$home\Desktop\NVIDIA"
-$Objects = Get-S3Object -BucketName $Bucket -KeyPrefix $KeyPrefix -Region us-east-1
-foreach ($Object in $Objects) {
-    $LocalFileName = $Object.Key
-    if ($LocalFileName -ne '' -and $Object.Size -ne 0) {
-        $LocalFilePath = Join-Path $LocalPath $LocalFileName
-        Copy-S3Object -BucketName $Bucket -Key $Object.Key -LocalFile $LocalFilePath -Region us-east-1
-    }
-}
 
 # Download meshroom
 add-type @"
@@ -118,8 +137,8 @@ add-type @"
 "@
 [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 $Url = 'https://81.149.204.19/files/Meshroom-2021.1.0-win64.zip'
-$ZipFile = 'C:\Users\meshroom' + $(Split-Path -Path $Url -Leaf)
-$Destination= 'C:\Users\meshroom'
+$ZipFile = 'D:\' + $(Split-Path -Path $Url -Leaf)
+$Destination= 'D:\'
 Invoke-WebRequest -Uri $Url -OutFile $ZipFile
 # change ownership of meshroom
 $ACL = Get-Acl $ZipFile
@@ -130,7 +149,7 @@ $ExtractShell = New-Object -ComObject Shell.Application
 $Files = $ExtractShell.Namespace($ZipFile).Items()
 $ExtractShell.NameSpace($Destination).CopyHere($Files)
 
-###### Start-Process isn't
+###### Start-Process isn't working?
 ## Install Cygwin
 #param ( $TempCygDir="$env:temp\cygInstall" )
 #if(!(Test-Path -Path $TempCygDir -PathType Container))
