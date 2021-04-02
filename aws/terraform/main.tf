@@ -7,7 +7,7 @@ terraform {
 }
 
 provider "aws" {
-  region     = "us-east-1"
+  region     = "us-west-1"
   profile    = "meirionconsulting"
 }
 
@@ -82,6 +82,7 @@ resource "aws_spot_instance_request" "photogrammetry" {
   vpc_security_group_ids          = [aws_security_group.allow_ssh.name, aws_security_group.allow_rdp.name]
   key_name                        = aws_key_pair.sshkey.key_name
   instance_interruption_behaviour = "terminate"
+  availability_zone               = "us-west-1c"
 
   # Script to set up the instance for me
   # To view the logs of userdata in powershell:
