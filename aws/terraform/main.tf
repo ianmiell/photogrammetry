@@ -7,7 +7,7 @@ terraform {
 }
 
 provider "aws" {
-  region     = "us-west-1"
+  region     = "us-east-1"
   profile    = "meirionconsulting"
 }
 
@@ -72,8 +72,9 @@ resource "aws_ebs_volume" "photogrammetry_volume" {
 resource "aws_spot_instance_request" "photogrammetry" {
   # See https://aws.amazon.com/ec2/spot/pricing/ for G instances
   #ami                             = "ami-0023ffc015ca50978" # Microsoft Windows Server 2016 Locale English with Nvidia GPU Grid Driver AMI provided by Amazon
-  #ami                             = "ami-07817f5d0e3866d32" # Windows_Server-2019-English-Full-Base-2021.03.10 us-east-1
-  ami                             = "ami-00791cfc13337a406" # Windows_Server-2019-English-Full-Base-2021.03.10 us-west-1
+  ami                             = "ami-07817f5d0e3866d32" # Windows_Server-2019-English-Full-Base-2021.03.10 us-east-1
+  #ami                             = "ami-00791cfc13337a406" # Windows_Server-2019-English-Full-Base-2021.03.10 us-west-1
+  #ami                             = "ami-077475371a476c548" # Windows_Server-2019-English-Full-Base-2021.03.10 us-west-2
   #instance_type                   = "t2.micro"              # for testing (not g instance)
   instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
   #instance_type                   = "g3.4xlarge"            # fast g instance
@@ -83,7 +84,7 @@ resource "aws_spot_instance_request" "photogrammetry" {
   vpc_security_group_ids          = [aws_security_group.allow_ssh.name, aws_security_group.allow_rdp.name]
   key_name                        = aws_key_pair.sshkey.key_name
   instance_interruption_behaviour = "terminate"
-  availability_zone               = "us-west-1c"
+  availability_zone               = "us-east-1c"
 
   # Script to set up the instance for me
   # To view the logs of userdata in powershell:
