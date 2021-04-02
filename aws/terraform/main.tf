@@ -149,15 +149,15 @@ $ExtractShell = New-Object -ComObject Shell.Application
 $Files = $ExtractShell.Namespace($ZipFile).Items()
 $ExtractShell.NameSpace($Destination).CopyHere($Files)
 
-###### Start-Process isn't working?
-## Install Cygwin
-#param ( $TempCygDir="$env:temp\cygInstall" )
-#if(!(Test-Path -Path $TempCygDir -PathType Container))
-# {
-#    $null = New-Item -Type Directory -Path $TempCygDir -Force
-# }
-#$client = new-object System.Net.WebClient
-#$client.DownloadFile("http://cygwin.com/setup.exe", "$TempCygDir\setup.exe" )
+##### Start-Process isn't working?
+# Install Cygwin
+param ( $TempCygDir="$env:temp\cygInstall" )
+if(!(Test-Path -Path $TempCygDir -PathType Container))
+ {
+    $null = New-Item -Type Directory -Path $TempCygDir -Force
+ }
+$client = new-object System.Net.WebClient
+$client.DownloadFile("http://cygwin.com/setup.exe", "$TempCygDir\setup.exe" )
 #Start-Process -wait -FilePath "$TempCygDir\setup.exe" -ArgumentList "-q -n -l $TempCygDir -s http://mirror.nyi.net/cygwin/ -R c:\Cygwin"
 #Start-Process -wait -FilePath "$TempCygDir\setup.exe" -ArgumentList "-q -n -l $TempCygDir -s http://mirror.nyi.net/cygwin/ -R c:\Cygwin -P openssh"
 </powershell>
