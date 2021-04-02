@@ -72,7 +72,8 @@ resource "aws_ebs_volume" "photogrammetry_volume" {
 resource "aws_spot_instance_request" "photogrammetry" {
   # See https://aws.amazon.com/ec2/spot/pricing/ for G instances
   #ami                             = "ami-0023ffc015ca50978" # Microsoft Windows Server 2016 Locale English with Nvidia GPU Grid Driver AMI provided by Amazon
-  ami                             = "ami-07817f5d0e3866d32" # Microsoft Windows Server 2019
+  #ami                             = "ami-07817f5d0e3866d32" # Windows_Server-2019-English-Full-Base-2021.03.10 us-east-1
+  ami                             = "ami-00791cfc13337a406" # Windows_Server-2019-English-Full-Base-2021.03.10 us-west-1
   #instance_type                   = "t2.micro"              # for testing (not g instance)
   instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
   #instance_type                   = "g3.4xlarge"            # fast g instance
