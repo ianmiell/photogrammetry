@@ -56,7 +56,7 @@ resource "aws_security_group" "allow_rdp" {
 resource "aws_volume_attachment" "photogrammetry_volume_attachment" {
   device_name  = "xvdj"
   volume_id    = aws_ebs_volume.photogrammetry_volume.id
-  instance_id  = aws_spot_instance_request.photogrammetry.id
+  instance_id  = aws_spot_instance_request.photogrammetry.spot_instance_id
   skip_destroy = true
 }
 
