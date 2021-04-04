@@ -28,7 +28,7 @@ echo PASSWORD:
 aws --profile meirionconsulting ec2 get-password-data --priv-launch-key ~/.ssh/MyKeyPair.pem --instance-id $INSTANCE_ID | grep Password
 echo "================================================================================"
 echo "Install NVIDIA drivers"
-echo "To download a public NVIDIA driver
+echo "To download a public NVIDIA driver"
 echo "Log on to your Windows instance and download the 64-bit NVIDIA driver appropriate for the instance type from http://www.nvidia.com/Download/Find.aspx. For Product Type, Product Series, and Product, use the options in the following table."
 echo "Instance    Product Type    Product Series    Product"
 echo "G3          Tesla           M-Class           M60"

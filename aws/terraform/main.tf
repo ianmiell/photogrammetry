@@ -91,24 +91,6 @@ resource "aws_spot_instance_request" "photogrammetry" {
   # cat C:\ProgramData\Amazon\EC2-Windows\Launch\Log\Ec2Launch.log
   user_data     = <<EOF
 <powershell>
-# From: https://github.com/dhoer/terraform_examples/blob/master/aws-ebs-mount/instance/main.tf
-# EC2Config service does not take actions on disks that have already been
-# initialized. It only provisions newer 'raw' disks, formats them and assigns
-# them with driver letters. So Powershell's Get-Disk function is used to
-# bring ebs volume online with read-write access after it has already been
-# initialized. It should assign it with the letter D: by default.
-#
-# See the following for more info about managing storage with windows:
-# https://blogs.msdn.microsoft.com/san/2012/07/03/managing-storage-with-windows-powershell-on-windows-server-2012/
-
-# Bring ebs volume online with read-write access
-Get-Disk | Where-Object IsOffline -Eq $True | Set-Disk -IsOffline $False
-Get-Disk | Where-Object isReadOnly -Eq $True | Set-Disk -IsReadOnly $False
-
-# Set Administrator password
-$admin = [adsi]("WinNT://./administrator, user")
-$admin.psbase.invoke("SetPassword", "!QA2ws3ed")
-
 # https://github.com/jirizarry426/Terraform-Playground/blob/c2cf040183fbb288e35c82aef8a4967548da9ca4/Windows/JI-TF-PG.tf
 Set-ExecutionPolicy -executionpolicy unrestricted
 New-LocalUser "meshroom" -Password (ConvertTo-SecureString "!QA2ws3ed" -AsPlainText -Force) -FullName "meshroom" -Description "run meshroom"
@@ -139,8 +121,8 @@ add-type @"
 "@
 [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 $Url = 'https://81.149.204.19/files/Meshroom-2021.1.0-win64.zip'
-$ZipFile = 'D:\' + $(Split-Path -Path $Url -Leaf)
-$Destination= 'D:\'
+$ZipFile = 'C:\Users\meshroom\' + $(Split-Path -Path $Url -Leaf)
+$Destination= 'C:\Users\meshroom\'
 Invoke-WebRequest -Uri $Url -OutFile $ZipFile
 # change ownership of meshroom
 $ACL = Get-Acl $ZipFile
