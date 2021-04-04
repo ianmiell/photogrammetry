@@ -53,18 +53,17 @@ resource "aws_security_group" "allow_rdp" {
 }
 
 
-resource "aws_volume_attachment" "photogrammetry_volume_attachment" {
-  device_name  = "xvdj"
-  volume_id    = aws_ebs_volume.photogrammetry_volume.id
-  instance_id  = aws_spot_instance_request.photogrammetry.spot_instance_id
-  skip_destroy = true
-}
-
-resource "aws_ebs_volume" "photogrammetry_volume" {
-  availability_zone = aws_spot_instance_request.photogrammetry.availability_zone
-  size              = 8
-}
-
+#resource "aws_volume_attachment" "photogrammetry_volume_attachment" {
+#  device_name  = "xvdj"
+#  volume_id    = aws_ebs_volume.photogrammetry_volume.id
+#  instance_id  = aws_spot_instance_request.photogrammetry.spot_instance_id
+#  skip_destroy = true
+#}
+#
+#resource "aws_ebs_volume" "photogrammetry_volume" {
+#  availability_zone = aws_spot_instance_request.photogrammetry.availability_zone
+#  size              = 8
+#}
 
 # WINDOWS PHOTOGRAMMETRY INSTANCE
 # To get Administrator password (.pem in ~/.ssh, see below for how it was generated):
@@ -84,7 +83,7 @@ resource "aws_spot_instance_request" "photogrammetry" {
   vpc_security_group_ids          = [aws_security_group.allow_ssh.name, aws_security_group.allow_rdp.name]
   key_name                        = aws_key_pair.sshkey.key_name
   instance_interruption_behaviour = "terminate"
-  availability_zone               = "us-east-1c"
+  #availability_zone               = "us-east-1c"
 
   # Script to set up the instance for me
   # To view the logs of userdata in powershell:
