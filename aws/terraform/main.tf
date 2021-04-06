@@ -34,9 +34,9 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 resource "aws_security_group" "allow_rdp" {
-  name        = "allow_rdp"
-  description = "Allow RDP inbound traffic"
-  vpc_id      = data.aws_vpc.default.id
+  name                            = "allow_rdp"
+  description                     = "Allow RDP inbound traffic"
+  vpc_id                          = data.aws_vpc.default.id
   ingress {
     description = "SSH"
     from_port   = 3389
@@ -52,38 +52,20 @@ resource "aws_security_group" "allow_rdp" {
   }
 }
 
-
-#resource "aws_volume_attachment" "photogrammetry_volume_attachment" {
-#  device_name  = "xvdj"
-#  volume_id    = aws_ebs_volume.photogrammetry_volume.id
-#  instance_id  = aws_spot_instance_request.photogrammetry.spot_instance_id
-#  skip_destroy = true
-#}
-#
-#resource "aws_ebs_volume" "photogrammetry_volume" {
-#  availability_zone = aws_spot_instance_request.photogrammetry.availability_zone
-#  size              = 8
-#}
-
 # WINDOWS PHOTOGRAMMETRY INSTANCE
 # To get Administrator password (.pem in ~/.ssh, see below for how it was generated):
 #  aws --profile meirionconsulting ec2 get-password-data --priv-launch-key ~/.ssh/MyKeyPair.pem --instance-id INSTANCE_ID
 resource "aws_spot_instance_request" "photogrammetry" {
   # See https://aws.amazon.com/ec2/spot/pricing/ for G instances
-  #ami                             = "ami-0023ffc015ca50978" # Microsoft Windows Server 2016 Locale English with Nvidia GPU Grid Driver AMI provided by Amazon
   ami                             = "ami-07817f5d0e3866d32" # Windows_Server-2019-English-Full-Base-2021.03.10 us-east-1
   #ami                             = "ami-00791cfc13337a406" # Windows_Server-2019-English-Full-Base-2021.03.10 us-west-1
   #ami                             = "ami-077475371a476c548" # Windows_Server-2019-English-Full-Base-2021.03.10 us-west-2
-  #instance_type                   = "t2.micro"              # for testing (not g instance)
-  instance_type                   = "g3s.xlarge"            # for slow, cheap testing (g instance)
-  #instance_type                   = "g3.4xlarge"            # fast g instance
+  instance_type                   = "g3s.xlarge"
   spot_type                       = "one-time"
   associate_public_ip_address     = true
   wait_for_fulfillment            = true
   vpc_security_group_ids          = [aws_security_group.allow_ssh.name, aws_security_group.allow_rdp.name]
   key_name                        = aws_key_pair.sshkey.key_name
-  instance_interruption_behaviour = "terminate"
-  #availability_zone               = "us-east-1c"
 
   # Script to set up the instance for me
   # To view the logs of userdata in powershell:
@@ -95,6 +77,8 @@ resource "aws_spot_instance_request" "photogrammetry" {
 Set-ExecutionPolicy -executionpolicy unrestricted
 New-LocalUser "meshroom" -Password (ConvertTo-SecureString "!QA2ws3ed" -AsPlainText -Force) -FullName "meshroom" -Description "run meshroom"
 Add-LocalGroupmember -Group "Administrators" -Member "meshroom"
+# Create images folder
+[system.io.directory]::CreateDirectory("C:\Users\meshroom\images")
 
 # Allow Remote Desktop connections : https://vmarena.com/how-to-enable-remote-desktop-rdp-remotely-using-powershell/
 Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
@@ -102,10 +86,9 @@ Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
 
 # Install SSH client and server
-# TODO: restart on startup
 Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
 Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
-Restart-Service sshd
+Set-Service -Name sshd -StartupType 'Automatic'
 
 # Download meshroom
 add-type @"
@@ -122,7 +105,7 @@ add-type @"
 [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 $Url = 'https://81.149.204.19/files/Meshroom-2021.1.0-win64.zip'
 $ZipFile = 'C:\Users\meshroom\' + $(Split-Path -Path $Url -Leaf)
-$Destination= 'C:\Users\meshroom\'
+$Destination = 'C:\Users\meshroom\'
 Invoke-WebRequest -Uri $Url -OutFile $ZipFile
 # change ownership of meshroom
 $ACL = Get-Acl $ZipFile
@@ -133,17 +116,14 @@ $ExtractShell = New-Object -ComObject Shell.Application
 $Files = $ExtractShell.Namespace($ZipFile).Items()
 $ExtractShell.NameSpace($Destination).CopyHere($Files)
 
-##### Start-Process isn't working?
-# Install Cygwin
-param ( $TempCygDir="$env:temp\cygInstall" )
-if(!(Test-Path -Path $TempCygDir -PathType Container))
- {
-    $null = New-Item -Type Directory -Path $TempCygDir -Force
- }
-$client = new-object System.Net.WebClient
-$client.DownloadFile("http://cygwin.com/setup.exe", "$TempCygDir\setup.exe" )
-#Start-Process -wait -FilePath "$TempCygDir\setup.exe" -ArgumentList "-q -n -l $TempCygDir -s http://mirror.nyi.net/cygwin/ -R c:\Cygwin"
-#Start-Process -wait -FilePath "$TempCygDir\setup.exe" -ArgumentList "-q -n -l $TempCygDir -s http://mirror.nyi.net/cygwin/ -R c:\Cygwin -P openssh"
+
+$Destination = 'C:\Users\meshroom\NVIDIA.exe'
+$Url = 'https://meirionconsulting.com/files/nvidia.exe'
+Invoke-WebRequest -Uri $Url -OutFile $Destination
+
+# Untar images (uploaded by now by run.sh)
+cd 'C:\Users\meshroom\images'
+tar -xvf images.tar
 </powershell>
 EOF
 }
