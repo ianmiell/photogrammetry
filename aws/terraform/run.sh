@@ -17,7 +17,7 @@ INSTANCE_ID="$(terraform show -json | jq . | grep 'spot_instance_id": "' | awk '
 set +o errexit
 while true
 do
-    if scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INPUT_FILE}" "meshroom@${IP}":'C:\Users\meshroom\images.tar'
+    if scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INPUT_FILE}" "meshroom@${IP}":'C:\Users\meshroom\images\images.tar'
     then
         break
     fi
