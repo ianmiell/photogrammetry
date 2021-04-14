@@ -73,9 +73,12 @@ resource "aws_spot_instance_request" "photogrammetry" {
   # cat C:\ProgramData\Amazon\EC2-Windows\Launch\Log\Ec2Launch.log
   user_data     = <<EOF
 <powershell>
+# Set Administrator password
+$admin = [adsi]("WinNT://./administrator, user")
+$admin.psbase.invoke("SetPassword", "${var.password}")
 # https://github.com/jirizarry426/Terraform-Playground/blob/c2cf040183fbb288e35c82aef8a4967548da9ca4/Windows/JI-TF-PG.tf
 Set-ExecutionPolicy -executionpolicy unrestricted
-New-LocalUser "meshroom" -Password (ConvertTo-SecureString "!QA2ws3ed" -AsPlainText -Force) -FullName "meshroom" -Description "run meshroom"
+New-LocalUser "meshroom" -Password (ConvertTo-SecureString "${var.password}" -AsPlainText -Force) -FullName "meshroom" -Description "run meshroom"
 Add-LocalGroupmember -Group "Administrators" -Member "meshroom"
 # Create images folder
 [system.io.directory]::CreateDirectory("C:\Users\meshroom\images")
