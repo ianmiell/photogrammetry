@@ -1,12 +1,12 @@
 #!/bin/bash
 
-set -o xtrace
+#set -o xtrace
 set -o errexit
 set -o nounset
 
 # TODO: take in folder as input
 # TODO: rsync folder, rather than scp
-INPUT_FILE="${HOME}/git/dataset_monstree/full/images.tar"
+INPUT_FILE="${HOME}/git/home/notes/3dprinting/photogrammetry/input_files/yesno/input.tar"
 
 terraform plan
 terraform apply -auto-approve
@@ -17,7 +17,7 @@ INSTANCE_ID="$(terraform show -json | jq . | grep 'spot_instance_id": "' | awk '
 set +o errexit
 while true
 do
-    if scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INPUT_FILE}" "meshroom@${IP}:images"
+    if scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${INPUT_FILE}" "meshroom@${IP}":'C:\Users\meshroom\images.tar'
     then
         break
     fi
@@ -25,7 +25,7 @@ do
 done
 echo "================================================================================"
 echo ADMINISTRATOR PASSWORD:
-aws --profile meirionconsulting ec2 get-password-data --priv-launch-key ~/.ssh/MyKeyPair.pem --instance-id $INSTANCE_ID | grep Password
+aws --profile meirionconsulting ec2 get-password-data --priv-launch-key ~/.ssh/MyKeyPair.pem --instance-id "$INSTANCE_ID" | grep Password
 echo "================================================================================"
 echo ""
 echo "1) Log on as admin"

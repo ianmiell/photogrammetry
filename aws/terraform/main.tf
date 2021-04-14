@@ -88,6 +88,8 @@ Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\W
 # Install SSH client and server
 Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
 Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+Restart-Service sshd
+# Restart on reboot
 Set-Service -Name sshd -StartupType 'Automatic'
 
 # Download meshroom
@@ -103,7 +105,7 @@ add-type @"
     }
 "@
 [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-$Url = 'https://81.149.204.19/files/Meshroom-2021.1.0-win64.zip'
+$Url = 'http://meirionconsulting.com/meirionconsulting/files/Meshroom-2021.1.0-win64.zip'
 $ZipFile = 'C:\Users\meshroom\' + $(Split-Path -Path $Url -Leaf)
 $Destination = 'C:\Users\meshroom\'
 Invoke-WebRequest -Uri $Url -OutFile $ZipFile
@@ -116,9 +118,8 @@ $ExtractShell = New-Object -ComObject Shell.Application
 $Files = $ExtractShell.Namespace($ZipFile).Items()
 $ExtractShell.NameSpace($Destination).CopyHere($Files)
 
-
 $Destination = 'C:\Users\meshroom\NVIDIA.exe'
-$Url = 'https://meirionconsulting.com/files/nvidia.exe'
+$Url = 'http://meirionconsulting.com/meirionconsulting/files/nvidia.exe'
 Invoke-WebRequest -Uri $Url -OutFile $Destination
 
 # Untar images (uploaded by now by run.sh)
