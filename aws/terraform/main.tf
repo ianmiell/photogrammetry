@@ -73,15 +73,19 @@ resource "aws_spot_instance_request" "photogrammetry" {
   # cat C:\ProgramData\Amazon\EC2-Windows\Launch\Log\Ec2Launch.log
   user_data     = <<EOF
 <powershell>
+
+#$username = "meshroom"
+#$password = ConvertTo-SecureString "${var.password}" -AsPlainText -Force
+#$cred = New-Object System.Management.Automation.PSCredential -ArgumentList ($username, $password)
+
 # Set Administrator password
 $admin = [adsi]("WinNT://./administrator, user")
 $admin.psbase.invoke("SetPassword", "${var.password}")
+
 # https://github.com/jirizarry426/Terraform-Playground/blob/c2cf040183fbb288e35c82aef8a4967548da9ca4/Windows/JI-TF-PG.tf
 Set-ExecutionPolicy -executionpolicy unrestricted
 New-LocalUser "meshroom" -Password (ConvertTo-SecureString "${var.password}" -AsPlainText -Force) -FullName "meshroom" -Description "run meshroom"
 Add-LocalGroupmember -Group "Administrators" -Member "meshroom"
-# Create images folder
-[system.io.directory]::CreateDirectory("C:\Users\meshroom\images")
 
 # Allow Remote Desktop connections : https://vmarena.com/how-to-enable-remote-desktop-rdp-remotely-using-powershell/
 Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
@@ -94,6 +98,56 @@ Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
 Restart-Service sshd
 # Restart on reboot
 Set-Service -Name sshd -StartupType 'Automatic'
+
+Write-Host "Installing Cygwin x86..." -ForegroundColor Cyan
+
+if(Test-Path C:\cygwin) {
+    Write-Host "Deleting existing installation..."
+    Remove-Item C:\cygwin -Recurse -Force
+}
+
+# download installer
+New-Item -Path C:\cygwin -ItemType Directory -Force
+$exePath = "C:\cygwin\setup-x86.exe"
+(New-Object Net.WebClient).DownloadFile('https://cygwin.com/setup-x86.exe', $exePath)
+
+# install cygwin
+cmd /c start /wait $exePath -qnNdO -R C:/cygwin -s http://cygwin.mirror.constant.com -l C:/cygwin/var/cache/setup -P mingw64-i686-gcc-g++ -P mingw64-x86_64-gcc-g++ -P gcc-g++ -P autoconf -P automake -P bison -P libtool -P make -P python -P gettext-devel -P intltool -P libiconv -P pkg-config -P wget -P curl
+C:\Cygwin\bin\bash -lc true
+
+# C:\cygwin\bin\gcc --version
+Write-Host "Installing Cygwin x64..." -ForegroundColor Cyan
+if(Test-Path C:\cygwin64) {
+    Write-Host "Deleting existing installation..."
+    Remove-Item C:\cygwin64 -Recurse -Force
+}
+
+# CYGWIN
+# download installer
+New-Item -Path C:\cygwin64 -ItemType Directory -Force
+$exePath = "C:\cygwin64\setup-x86_64.exe"
+(New-Object Net.WebClient).DownloadFile('https://cygwin.com/setup-x86_64.exe', $exePath)
+# install cygwin
+cmd /c start /wait $exePath -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P mingw64-i686-gcc-g++ -P mingw64-x86_64-gcc-g++ -P gcc-g++ -P autoconf -P automake -P bison -P libtool -P make -P python -P gettext-devel -P intltool -P libiconv -P pkg-config -P wget -P curl
+C:\cygwin64\bin\bash -lc true
+Write-Host "Installed Cygwin x86" -ForegroundColor Green
+# compact folders
+Write-Host "Compacting C:\cygwin..." -NoNewline
+compact /c /i /s:C:\cygwin | Out-Null
+Write-Host "OK" -ForegroundColor Green
+Write-Host "Compacting C:\cygwin64..." -NoNewline
+compact /c /i /s:C:\cygwin64 | Out-Null
+Write-Host "OK" -ForegroundColor Green
+
+
+# NVIDIA DRIVER (MANUALLY PLACED ON HOME SERVER)
+$Destination = 'C:\Users\Administrator\NVIDIA.exe'
+$Url = 'http://meirionconsulting.com/meirionconsulting/files/nvidia.exe'
+Invoke-WebRequest -Uri $Url -OutFile $Destination
+
+
+# Create images folder
+[system.io.directory]::CreateDirectory("C:\Users\meshroom\images")
 
 # Download meshroom
 add-type @"
@@ -121,9 +175,10 @@ $ExtractShell = New-Object -ComObject Shell.Application
 $Files = $ExtractShell.Namespace($ZipFile).Items()
 $ExtractShell.NameSpace($Destination).CopyHere($Files)
 
-$Destination = 'C:\Users\meshroom\NVIDIA.exe'
-$Url = 'http://meirionconsulting.com/meirionconsulting/files/nvidia.exe'
-Invoke-WebRequest -Uri $Url -OutFile $Destination
+# change ownership / session to meshroom
+C:\cygwin64\bin\bash -c 'chown -R meshroom /cygdrive/c/home/meshroom'
+C:\cygwin64\bin\bash -c 'ls -ltR /cygdrive/c/home/meshroom'
+
 
 # Untar images (uploaded by now by run.sh)
 cd 'C:\Users\meshroom\images'
